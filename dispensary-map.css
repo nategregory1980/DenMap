@@ -193,6 +193,17 @@ html, body {
   border: none;
   font-weight: bold;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  line-height: 1;
+  font-size: 14px;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.toolbar-button:hover {
+  background: #f0f0f0;
 }
 
 /* Dropdown Styles */
