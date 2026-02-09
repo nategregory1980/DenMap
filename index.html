@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Dispensary Navigator</title>
+	<style>
+		* {
+			box-sizing: border-box;
+		}
+		body {
+			margin: 0;
+			padding: 20px;
+			min-height: 100vh;
+			width: 100%;
+			background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)),
+			            url('Winter_cannabis.png') no-repeat left center,
+			            url('greenhouse_cannabis.png') no-repeat right center;
+			background-size: auto, 50% 100%, 50% 100%;
+			background-attachment: fixed;
+			background-position: center, left center, right center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			font-family: 'Segoe UI', Arial, sans-serif;
+			overflow-x: hidden;
+		}
+		.container {
+			background: rgba(255,255,255,0.9);
+			border-radius: 16px;
+			box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+			padding: clamp(24px, 5vw, 40px);
+			text-align: center;
+			max-width: 500px;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+		}
+		h1 {
+			font-size: clamp(1.75rem, 5vw, 2.5rem);
+			margin-bottom: clamp(20px, 4vw, 32px);
+			color: #1a3a5b;
+			letter-spacing: 1px;
+			word-wrap: break-word;
+		}
+		.city-btn {
+			display: block;
+			width: 100%;
+			margin: clamp(12px, 2vw, 16px) 0;
+			padding: clamp(12px, 3vw, 16px);
+			font-size: clamp(1rem, 2.5vw, 1.2rem);
+			background: #008026;
+			color: #ffffff;
+			border: none;
+			border-radius: 8px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			text-decoration: none;
+			font-weight: bold;
+			box-shadow: 0 2px 8px rgba(0,130,38,0.3);
+		}
+		.city-btn:hover {
+			background: #00c20a;
+			color: #fff;
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(0,130,38,0.4);
+		}
+		.city-btn:active {
+			transform: translateY(0);
+		}
+		
+		/* Mobile-specific adjustments */
+		@media (max-width: 768px) {
+			body {
+				padding: 16px;
+				background-size: auto, 45% 100%, 45% 100%;
+			}
+			.container {
+				border-radius: 12px;
+			}
+			h1 {
+				letter-spacing: 0.5px;
+			}
+		}
+		
+		/* Very small screens */
+		@media (max-width: 480px) {
+			body {
+				padding: 12px;
+				background-size: auto, 40% 100%, 40% 100%;
+			}
+			.container {
+				padding: 20px 16px;
+			}
+		}
+		
+		/* Large screens */
+		@media (min-width: 1200px) {
+			body {
+				background-size: auto, 50% 100%, 50% 100%;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Dispensary Navigator</h1>
+		<a class="city-btn" href="dispensary-map.html">Denver</a>
+		<a class="city-btn" href="colorado_springs.html">Colorado Springs</a>
+	</div>
+</body>
+</html>

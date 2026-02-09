@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Colorado Springs Dispensary Map</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css" />
+  <link rel="stylesheet" href="colorado-springs.css" />
+  <script src="https://js.arcgis.com/4.33/"></script>
+</head>
+<body>
+  <div id="mainAppContainer">
+    <div id="toolbox">
+      <div style="position: relative;">
+        <button id="layersBtn" class="toolbar-button">Layers ▼</button>
+        <div id="layersDropdown" class="layers-dropdown">
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkRetailMarijuana" checked>
+            Retail Marijuana Store Locations
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkMedicalMarijuana" checked>
+            Medical Marijuana Store Locations
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkVettedAreas">
+            Vetted Areas
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkChildcareFacilities">
+            Childcare Facilities
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkDrugTreatment">
+            Drug and Alcohol Treatment
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkPublicSchools">
+            Schools
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkParcels">
+            Parcels
+          </label>
+          <div class="layers-dropdown-actions">
+            <button id="clearAllLayers" class="clear-all-btn">Clear All</button>
+          </div>
+        </div>
+      </div>
+      <div style="position: relative;">
+        <button id="legendBtn" class="toolbar-button">Legend</button>
+      </div>
+      <div style="position: relative;">
+        <button id="bufferBtn" class="toolbar-button">Buffer</button>
+      </div>
+      <div style="position: relative;">
+        <button id="measureBtn" class="toolbar-button">Measure</button>
+      </div>
+      <div style="position: relative;">
+        <button id="suitabilityBtn" class="toolbar-button">Suitability</button>
+      </div>
+      <div style="position: relative;">
+        <a id="homebtn" class="toolbar-button" href="index.html">Home</a>
+      </div>
+      <div class="search-container">
+        <input id="searchBox" type="text" placeholder="Search addresses..." class="search-box" autocomplete="off" />
+        <div id="addressSuggestions"></div>
+      </div>
+    </div>
+    
+    <div id="scaleWarningBanner">
+      Too many records to display - zoom in closer to see details
+    </div>
+    
+    <div id="mainContent">
+      <div id="viewDiv" style="flex: 1; min-width: 0; min-height: 0; position: relative; z-index: 1;"></div>
+      <div id="panelsContainer">
+        <button class="close-btn" id="closePanels">&times;</button>
+        <div id="mapLegend">
+          <h3 style="margin-top: 0; color: #034d46;">Colorado Springs Dispensary Map Legend</h3>
+          <div class="legend-item" data-legend="retail-marijuana">
+            <div class="legend-symbol" style="background-color: rgb(255,0,0); border-radius: 50%; width: 8px; height: 8px; border: 1px solid #FFFFFF;"></div>
+            <span>Retail Marijuana Store Locations</span>
+          </div>
+          <div class="legend-item" data-legend="medical-marijuana">
+            <div class="legend-symbol" style="background-color: rgb(0,128,0); border-radius: 50%; width: 8px; height: 8px; border: 1px solid #FFFFFF;"></div>
+            <span>Medical Marijuana Store Locations</span>
+          </div>
+          <div class="legend-item" data-legend="vetted-areas" style="display: none;">
+            <div class="legend-symbol" style="background-color: rgba(0,255,0,0.6); border: 2px solid #00AA00;"></div>
+            <span>Vetted Areas</span>
+          </div>
+          <div class="legend-item" data-legend="childcare-facilities" style="display: none;">
+            <div class="legend-symbol" style="background-color: #FFFF00; border-radius: 50%; width: 6px; height: 6px; border: 1px solid #FFD700;"></div>
+            <span>Childcare Facilities</span>
+          </div>
+          <div class="legend-item" data-legend="drug-treatment" style="display: none;">
+            <div class="legend-symbol" style="background-color: rgb(134,67,173); border-radius: 50%; width: 8px; height: 8px; border: 1px solid #000000;"></div>
+            <span>Drug & Alcohol Treatment</span>
+          </div>
+          <div class="legend-item" data-legend="public-schools" style="display: none;">
+            <div class="legend-symbol" style="background-color: #0011ff; border-radius: 50%; width: 6px; height: 6px; border: 1px solid #000000;"></div>
+            <span>Schools</span>
+          </div>
+          <div class="legend-item" data-legend="parcels" style="display: none;">
+            <div class="legend-symbol" style="background: transparent; border: 0.5px solid #C0C0C0;"></div>
+            <span>Parcels</span>
+          </div>
+        </div>
+        <div id="bufferPanel">
+          <h4 style="margin-top: 0; color: #034d46;">Buffer Analysis</h4>
+          <div id="retailMarijuanaBufferSection" class="buffer-section">
+            <h5 style="margin-bottom: 8px; color: #034d46;">Retail Marijuana Stores:</h5>
+            <div class="buffer-input-group">
+              <label for="retailMarijuanaBufferDistance">Buffer Distance (feet):</label>
+              <input type="number" id="retailMarijuanaBufferDistance" value="1000" min="1" max="10000" class="buffer-input">
+            </div>
+          </div>
+          <div id="medicalMarijuanaBufferSection" class="buffer-section">
+            <h5 style="margin-bottom: 8px; color: #034d46;">Medical Marijuana Stores:</h5>
+            <div class="buffer-input-group">
+              <label for="medicalMarijuanaBufferDistance">Buffer Distance (feet):</label>
+              <input type="number" id="medicalMarijuanaBufferDistance" value="1000" min="1" max="10000" class="buffer-input">
+            </div>
+          </div>
+          <div id="childcareBufferSection" class="buffer-section hidden">
+            <h5 style="margin-bottom: 8px; color: #034d46;">Childcare Facilities:</h5>
+            <div class="buffer-input-group">
+              <label for="childcareBufferDistance">Buffer Distance (feet):</label>
+              <input type="number" id="childcareBufferDistance" value="1000" min="1" max="10000" class="buffer-input">
+            </div>
+          </div>
+          <div id="drugTreatmentBufferSection" class="buffer-section hidden">
+            <h5 style="margin-bottom: 8px; color: #034d46;">Drug & Alcohol Treatment:</h5>
+            <div class="buffer-input-group">
+              <label for="drugTreatmentBufferDistance">Buffer Distance (feet):</label>
+              <input type="number" id="drugTreatmentBufferDistance" value="1000" min="1" max="10000" class="buffer-input">
+            </div>
+          </div>
+          <div id="schoolsBufferSection" class="buffer-section hidden">
+            <h5 style="margin-bottom: 8px; color: #034d46;">Schools:</h5>
+            <div class="buffer-input-group">
+              <label for="schoolsBufferDistance">Buffer Distance (feet):</label>
+              <input type="number" id="schoolsBufferDistance" value="1000" min="1" max="10000" class="buffer-input">
+            </div>
+          </div>
+          <div class="buffer-actions">
+            <button id="applyAllBuffers" class="filter-btn">Apply Buffers</button>
+            <button id="clearAllBuffers" class="filter-btn">Clear Buffers</button>
+          </div>
+        </div>
+        <div id="measurePanel">
+          <h4 style="margin-top: 0; color: #034d46;">Measurement Tools</h4>
+          <div class="measure-buttons">
+            <button id="measureDistanceBtn" class="filter-btn">Distance</button>
+            <button id="measureAreaBtn" class="filter-btn">Area</button>
+            <button id="clearMeasurementsBtn" class="filter-btn">Clear</button>
+          </div>
+          <div id="measurementResults">
+            <!-- Measurement results will appear here -->
+          </div>
+        </div>
+        <div id="suitabilityPanel">
+          <h4 style="margin-top: 0; color: #034d46;">Suitability Analysis</h4>
+          <div class="suitability-info">
+            <p style="font-size: 13px; margin: 0 0 10px 0; color: #666;">
+              Click on building footprints to place analysis pins. Maximum 100 pins allowed.
+            </p>
+            <div style="margin: 8px 0; font-size: 12px; color: #666; border-top: 1px solid #eee; padding-top: 8px;">
+              <strong>Pin Colors:</strong><br>
+              <span style="color: #28a745; font-size: 14px;">●</span> Suitable location &nbsp;&nbsp;
+              <span style="color: #dc3545; font-size: 14px;">●</span> Has regulatory issues
+            </div>
+            <div class="pin-counter">
+              <span style="font-weight: bold; color: #034d46;">Pins placed: </span>
+              <span id="pinCount" style="color: #034d46;">0</span>
+              <span style="color: #034d46;"> / 100</span>
+            </div>
+          </div>
+          <div id="suitabilityActions" class="suitability-actions" style="display: none;">
+            <button id="analyzeSuitability" class="filter-btn">Analyze</button>
+            <button id="clearSuitabilityPins" class="filter-btn">Clear Pins</button>
+            <button id="copyResults" class="filter-btn" style="display: none;">📋 Copy Results</button>
+          </div>
+          <div id="suitabilityResults">
+            <!-- Analysis results will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="colorado-springs.js"></script>
+</body>
+</html>
