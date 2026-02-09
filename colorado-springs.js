@@ -10,8 +10,9 @@ require([
   "esri/widgets/DistanceMeasurement2D",
   "esri/widgets/AreaMeasurement2D",
   "esri/layers/GraphicsLayer",
-  "esri/Graphic"
-], function(Map, MapView, FeatureLayer, GeoJSONLayer, CSVLayer, geometryEngine, DistanceMeasurement2D, AreaMeasurement2D, GraphicsLayer, Graphic) {
+  "esri/Graphic",
+  "esri/rest/locator"
+], function(Map, MapView, FeatureLayer, GeoJSONLayer, CSVLayer, geometryEngine, DistanceMeasurement2D, AreaMeasurement2D, GraphicsLayer, Graphic, locator) {
 
   let map, view;
   
@@ -381,6 +382,15 @@ require([
   let maxPins = 100;
   let suitabilityMode = false;
 
+  // Search variables
+  let highlightGraphicsLayer = null;
+  let currentSuggestions = [];
+  let selectedSuggestionIndex = -1;
+  let suggestionTimeout = null;
+  const searchBox = document.getElementById("searchBox");
+  const addressSuggestions = document.getElementById("addressSuggestions");
+  const locatorUrl = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer";
+
   // Layers dropdown toggle
   layersBtn.addEventListener("click", function(e) {
     e.stopPropagation();
@@ -532,6 +542,13 @@ require([
     // Close the layers dropdown after clearing
     document.getElementById('layersDropdown').style.display = 'none';
   });
+
+  // Initialize highlight graphics layer
+  highlightGraphicsLayer = new GraphicsLayer({
+    title: "Search Highlight",
+    listMode: "hide"
+  });
+  map.add(highlightGraphicsLayer);
 
   // Initialize measurement graphics layer
   measurementGraphicsLayer = new GraphicsLayer({
@@ -843,6 +860,217 @@ require([
     }
   });
   document.getElementById("clearAllBuffers").addEventListener("click", clearAllBuffers);
+
+  // Address search functionality
+  searchBox.addEventListener("input", function(e) {
+    const query = e.target.value.trim();
+    
+    // Clear previous timeout
+    if (suggestionTimeout) {
+      clearTimeout(suggestionTimeout);
+    }
+    
+    if (query.length >= 3) {
+      // Debounce the suggestions
+      suggestionTimeout = setTimeout(() => {
+        getSuggestions(query);
+      }, 300);
+    } else {
+      hideSuggestions();
+    }
+  });
+
+  searchBox.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (selectedSuggestionIndex >= 0 && currentSuggestions[selectedSuggestionIndex]) {
+        selectSuggestion(currentSuggestions[selectedSuggestionIndex]);
+      } else {
+        performSearch(searchBox.value);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      navigateSuggestions(1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      navigateSuggestions(-1);
+    } else if (e.key === "Escape") {
+      hideSuggestions();
+      searchBox.blur();
+    }
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest(".search-container")) {
+      hideSuggestions();
+    }
+  });
+
+  function getSuggestions(query) {
+    const params = {
+      address: {
+        address: query
+      },
+      location: view.center,
+      maxLocations: 8,
+      searchExtent: view.extent,
+      outFields: ["*"]
+    };
+    
+    locator.addressToLocations(locatorUrl, params).then(results => {
+      const suggestions = results
+        .filter(result => {
+          // Filter for Colorado Springs area results
+          const address = result.address || "";
+          return address.toLowerCase().includes("colorado springs") || address.toLowerCase().includes("co");
+        })
+        .map(result => result.address)
+        .slice(0, 8);
+      
+      showSuggestions(suggestions, query);
+    }).catch(error => {
+      console.error("Autocomplete error:", error);
+    });
+  }
+
+  function showSuggestions(suggestions, query) {
+    currentSuggestions = suggestions;
+    selectedSuggestionIndex = -1;
+    
+    if (suggestions.length === 0) {
+      hideSuggestions();
+      return;
+    }
+    
+    const html = suggestions.map((suggestion, index) => {
+      // Highlight matching text
+      const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      const highlighted = suggestion.replace(regex, '<strong>$1</strong>');
+      
+      return `
+        <div class="suggestion-item" data-index="${index}">
+          <span style="color: #666; margin-right: 4px;">📍</span>
+          ${highlighted}
+        </div>`;
+    }).join('');
+    
+    addressSuggestions.innerHTML = html;
+    addressSuggestions.style.display = 'block';
+    
+    // Add click event listeners to suggestions
+    addressSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', function() {
+        const index = parseInt(this.dataset.index);
+        selectSuggestion(currentSuggestions[index]);
+      });
+    });
+  }
+
+  function hideSuggestions() {
+    addressSuggestions.style.display = 'none';
+    selectedSuggestionIndex = -1;
+  }
+
+  function navigateSuggestions(direction) {
+    if (currentSuggestions.length === 0) return;
+    
+    // Remove previous selection
+    if (selectedSuggestionIndex >= 0) {
+      const items = addressSuggestions.querySelectorAll('.suggestion-item');
+      if (items[selectedSuggestionIndex]) {
+        items[selectedSuggestionIndex].classList.remove('selected');
+      }
+    }
+    
+    // Update selection
+    selectedSuggestionIndex += direction;
+    
+    if (selectedSuggestionIndex < 0) {
+      selectedSuggestionIndex = -1;
+      searchBox.value = searchBox.value; // Keep original input
+    } else if (selectedSuggestionIndex >= currentSuggestions.length) {
+      selectedSuggestionIndex = currentSuggestions.length - 1;
+    }
+    
+    // Apply new selection
+    if (selectedSuggestionIndex >= 0) {
+      const items = addressSuggestions.querySelectorAll('.suggestion-item');
+      if (items[selectedSuggestionIndex]) {
+        items[selectedSuggestionIndex].classList.add('selected');
+        searchBox.value = currentSuggestions[selectedSuggestionIndex];
+      }
+    }
+  }
+
+  function selectSuggestion(address) {
+    searchBox.value = address;
+    hideSuggestions();
+    performSearch(address);
+  }
+
+  function flashAddressPoint(geometry) {
+    // Clear any existing highlights
+    highlightGraphicsLayer.removeAll();
+    
+    // Create flashing circle graphic
+    const flashGraphic = new Graphic({
+      geometry: geometry,
+      symbol: {
+        type: "simple-marker",
+        style: "circle",
+        color: [255, 0, 0, 0.8],
+        size: "20px",
+        outline: {
+          color: [255, 255, 255, 1],
+          width: 3
+        }
+      }
+    });
+    
+    highlightGraphicsLayer.add(flashGraphic);
+    
+    // Remove the highlight after animation completes (3 seconds)
+    setTimeout(() => {
+      highlightGraphicsLayer.removeAll();
+    }, 3000);
+  }
+
+  function performSearch(query) {
+    if (!query.trim()) {
+      return;
+    }
+    
+    const params = {
+      address: {
+        address: query
+      },
+      location: view.center,
+      maxLocations: 1,
+      outFields: ["*"]
+    };
+    
+    locator.addressToLocations(locatorUrl, params).then(results => {
+      if (results.length > 0) {
+        const result = results[0];
+        
+        // Zoom to the address
+        view.goTo({
+          center: result.location,
+          zoom: 18
+        }).then(() => {
+          // Flash the location
+          flashAddressPoint(result.location);
+          // Clear the search box
+          searchBox.value = "";
+        });
+      } else {
+        console.log(`No results found for "${query}"`);
+      }
+    }).catch(error => {
+      console.error("Search error:", error);
+    });
+  }
 
   // Individual Buffer functionality
   function applyMarijuanaBuffer(bufferDistance) {
