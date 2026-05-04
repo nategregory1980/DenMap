@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Colorado Dispensary Map</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css" />
+  <link rel="stylesheet" href="Retail.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://js.arcgis.com/4.33/"></script>
+</head>
+<body>
+  <div id="mainAppContainer">
+    <div id="toolbox">
+      <div style="position: relative;">
+        <button id="layersBtn" class="toolbar-button">Layers ▼</button>
+        <div id="layersDropdown" class="layers-dropdown">
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkMedical" checked>
+            Medical
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkRetail" checked>
+            Retail
+          </label>
+          <label class="layer-checkbox">
+            <input type="checkbox" id="chkRetailMedical">
+            Retail & Medical
+          </label>
+          <div class="layers-dropdown-actions">
+            <button id="clearAllLayers" class="clear-all-btn">Clear All</button>
+          </div>
+        </div>
+      </div>
+      <div style="position: relative;">
+        <button id="legendBtn" class="toolbar-button">Legend</button>
+      </div>
+      <div style="position: relative;">
+        <a id="homebtn" class="toolbar-button" href="index.html">Home</a>
+      </div>
+      <div class="search-container">
+        <input id="searchBox" type="text" placeholder="Search addresses..." class="search-box" autocomplete="off" />
+        <div id="addressSuggestions"></div>
+      </div>
+    </div>
+    
+    <div id="loadingIndicator" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px 40px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.3); z-index: 100; font-size: 16px; color: #034d46;">
+      Loading data from Google Sheets...
+    </div>
+    
+    <div id="mainContent">
+      <div id="viewDiv" style="flex: 1; min-width: 0; min-height: 0; position: relative; z-index: 1;"></div>
+      <div id="panelsContainer">
+        <button class="close-btn" id="closePanels">&times;</button>
+        <div id="mapLegend">
+          <h3 style="margin-top: 0; color: #034d46;">Legend</h3>
+          <div class="legend-item" data-legend="medical">
+            <img src="Medical_leaf.png" alt="Medical" style="width: 24px; height: 24px; margin-right: 8px;">
+            <span>Medical</span>
+          </div>
+          <div class="legend-item" data-legend="retail">
+            <img src="Retail_leaf.png" alt="Retail" style="width: 24px; height: 24px; margin-right: 8px;">
+            <span>Retail</span>
+          </div>
+          <div class="legend-item" data-legend="retail-medical">
+            <img src="ReMed.png" alt="Retail & Medical" style="width: 28px; height: 28px; margin-right: 8px;">
+            <span>Retail & Medical (Combined)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="Retail_Medical_Colorado.js"></script>
+</body>
+</html>
